@@ -1,0 +1,49 @@
+import json
+import os
+
+OUTPUT_DIR = "./output_results"
+
+def check_json_consistency():
+    print("🔍 Analyse de la cohérence des fichiers JSON...")
+    
+    if not os.path.exists(OUTPUT_DIR):
+        print(f"❌ Erreur : Le dossier {OUTPUT_DIR} n'existe pas.")
+        return
+
+    for filename in os.listdir(OUTPUT_DIR):
+        if filename.endswith(".json"):
+            filepath = os.path.join(OUTPUT_DIR, filename)
+            
+            with open(filepath, 'r', encoding='utf-8') as f:
+                try:
+                    data = json.load(f)
+                    
+                    # 1. Vérification des auteurs
+                    authors = data.get("authors", [])
+                    
+                    # 2. Vérification du texte (on traite la liste)
+                    body_content = data.get("body_text", [])
+                    
+                    # Si c'est une liste, on concatène tout pour vérifier la longueur
+                    if isinstance(body_content, list):
+                        # On extrait le texte de chaque dictionnaire dans la liste
+                        full_text = " ".join([item.get("text", "") for item in body_content if isinstance(item, dict)])
+                    else:
+                        full_text = str(body_content)
+
+                    issues = []
+                    if not authors:
+                        issues.append("Auteurs vides")
+                    if len(full_text.strip()) < 100:
+                        issues.append("Texte principal vide ou trop court")
+                    
+                    if issues:
+                        print(f"⚠️ {filename} : {', '.join(issues)}")
+                    else:
+                        print(f"✅ {filename} : OK ({len(full_text)} caractères)")
+                        
+                except Exception as e:
+                    print(f"❌ Erreur lors de la lecture de {filename}: {e}")
+
+if __name__ == "__main__":
+    check_json_consistency()

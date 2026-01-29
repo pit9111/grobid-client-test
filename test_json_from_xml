@@ -1,0 +1,74 @@
+import json
+import os
+import xml.etree.ElementTree as ET
+
+OUTPUT_DIR = "./output_results"
+# Namespaces TEI pour Grobid
+NS = {'tei': 'http://www.tei-c.org/ns/1.0'}
+
+def extract_json_text(body_data):
+    """Extrait le texte brut d'une liste de paragraphes JSON."""
+    if isinstance(body_data, list):
+        return " ".join([item.get("text", "") for item in body_data if isinstance(item, dict)])
+    return str(body_data) if body_data else ""
+
+def check_cross_format_integrity():
+    print("⚖️ Comparaison XML vs JSON...")
+
+    if not os.path.exists(OUTPUT_DIR):
+        print(f"❌ Dossier {OUTPUT_DIR} introuvable.")
+        return
+
+    json_files = [f for f in os.listdir(OUTPUT_DIR) if f.endswith(".json")]
+
+    for j_file in json_files:
+        base_name = j_file.replace(".json", "")
+        # Grobid nomme souvent ses sorties 'nom.tei.xml' ou 'nom.fulltext.tei.xml'
+        # On cherche un fichier qui commence par le nom de base et finit par .xml
+        xml_file = next((f for f in os.listdir(OUTPUT_DIR) if f.startswith(base_name) and f.endswith(".xml")), None)
+        
+        if not xml_file:
+            continue
+
+        xml_path = os.path.join(OUTPUT_DIR, xml_file)
+        json_path = os.path.join(OUTPUT_DIR, j_file)
+
+        try:
+            # --- Lecture JSON ---
+            with open(json_path, 'r', encoding='utf-8') as f:
+                j_data = json.load(f)
+            
+            j_text = extract_json_text(j_data.get("body_text", []))
+            j_has_authors = len(j_data.get("authors", [])) > 0
+
+            # --- Lecture XML ---
+            tree = ET.parse(xml_path)
+            root = tree.getroot()
+
+            # Les auteurs en XML sont dans teiHeader/fileDesc/sourceDesc/biblStruct/analytic/author
+            xml_authors = root.findall(".//tei:author", NS)
+            # Le texte en XML est dans text/body/div/p
+            xml_paragraphs = root.findall(".//tei:p", NS)
+            xml_text_content = "".join([p.text for p in xml_paragraphs if p.text])
+
+            # --- Validation ---
+            issues = []
+
+            # Si le XML contient des auteurs mais que le JSON est vide
+            if xml_authors and not j_has_authors:
+                issues.append("Auteurs perdus à la conversion")
+
+            # Si le XML contient du texte significatif mais que le JSON est vide
+            if len(xml_text_content.strip()) > 100 and len(j_text.strip()) < 50:
+                issues.append("Texte perdu à la conversion")
+
+            if issues:
+                print(f"❌ {base_name} : {', '.join(issues)}")
+            else:
+                print(f"✅ {base_name} : Cohérence OK")
+
+        except Exception as e:
+            print(f"⚠️ Erreur technique sur {base_name} : {e}")
+
+if __name__ == "__main__":
+    check_cross_format_integrity()
