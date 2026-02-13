@@ -1,4 +1,4 @@
-<SECTION name=resume">
+<SECTION name="resume">
 Ceci est un repository expérimental dédié à faire des tests
 </SECTION>
 ## Getting started
