@@ -1,6 +1,6 @@
-<SECTION name="resume">
+<description>
 Ceci est un repository expérimental dédié à faire des tests
-</SECTION>
+</description>
 ## Getting started
 
 ```bash
