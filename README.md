@@ -1,7 +1,5 @@
 <description>
-Ceci est un repository expérimental dédié à faire des tests test
-test
-  test
+Ceci est un repository expérimental dédié à faire des tests. Modification faite le 17/02
 </description>
 
 ## Getting started
