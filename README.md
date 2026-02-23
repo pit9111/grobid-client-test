@@ -1,5 +1,5 @@
 <description>
-Ceci est un repository expérimental dédié à faire des tests. Modification faite le 23/02 14h
+Ceci est un repository expérimental dédié à faire des tests. Modification faite le 23/02 16h
 </description>
 
 ## Getting started
